@@ -45,7 +45,7 @@ from collections import OrderedDict, namedtuple
 
 changelog_entry = namedtuple("ChangelogEntry", ["author", "mail", "contents", "date"])
 
-not_allowed_regex = re.compile("[^a-z0-9-_]+")
+not_allowed_regex = re.compile("[^a-z0-9_]+")
 
 def none_on_exception(*args, **kwargs):
 	"""
@@ -78,7 +78,7 @@ def slugify(string):
 	:param: string: the string to slugify
 	"""
 
-	return not_allowed_regex.sub("-", string.lower())
+	return not_allowed_regex.sub(".", string.lower())
 
 def tzinfo_from_offset(offset):
 	"""
@@ -159,7 +159,6 @@ class SlimPackage:
 		"""
 
 		_changelog_path = os.path.join(self.git_repository.working_dir, "debian/changelog")
-
 		if os.path.exists(_changelog_path):
 			with open(_changelog_path, "r") as f:
 				try:
@@ -450,6 +449,12 @@ if __name__ == "__main__":
 		branch_prefix=args.branch_prefix,
 		comment=args.comment
 	)
+
+	# Build a version right now, so that we don't worry about (eventually)
+	# replacing debian/changelog before the get_version_from_changelog
+	# strategy is executed
+	version = pkg.version
+	print("I: Resulting version is %s" % version)
 
 	with open("debian/changelog", "w") as f:
 		for entry in pkg.iter_changelog():
