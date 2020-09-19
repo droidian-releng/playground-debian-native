@@ -35,6 +35,19 @@ _debian_package_build_template: &debian_package_build_template
        ${DOCKER_IMAGE} \
        /bin/sh -c "cd /buildd/sources ; apt install -y python3-git ; ./build_package.sh"
 
+  deploy:
+    provider: releases
+    edge: true # use dpl v2
+    draft: false
+    file:
+      - /tmp/buildd-results/*.deb
+      - /tmp/buildd-results/*.dsc
+      - /tmp/buildd-results/*.changes
+      - /tmp/buildd-results/*.tar.*
+    on:
+      tags: true
+      condition: -n $RELEASES_TOKEN
+
 _bullseye_amd64_full_env_filter: &bullseye_amd64_full_env_filter
   if: env(BUILD_ON) =~ /^amd64 ?/ AND (branch =~ /^(feature\/)?bullseye(\/)?.*$/ OR (tag =~ /^hybris-mobian\/bullseye\/.*$/))
 
