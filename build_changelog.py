@@ -445,7 +445,7 @@ if __name__ == "__main__":
 		commit_hash=args.commit or repository.head.commit.hexsha,
 		tag=args.tag,
 		tag_prefix=args.tag_prefix,
-		branch=args.branch or repository.active_branch.name,
+		branch=args.branch or (None if args.tag else repository.active_branch.name),
 		branch_prefix=args.branch_prefix,
 		comment=args.comment
 	)
