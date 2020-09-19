@@ -1,0 +1,32 @@
+Source: playground-debian-native
+Maintainer: Eugenio Paolantonio (g7) <me@medesimo.eu>
+Section: misc
+Priority: optional
+Build-Depends: debhelper (>= 10)
+Vcs-Browser: https://github.com/hybris-mobian-releng/playground-debian-native
+Vcs-Git: https://github.com/hybris-mobian-releng/playground-debian-native.git
+
+Package: playground-debian-native-any
+Architecture: any
+Description: playground-debian-native (any)
+ This package should be routed on an amd64 builder,
+ but should be available to every architecture.
+
+Package: playground-debian-native-all
+Architecture: all
+Description: playground-debian-native (all)
+ This package should be routed on every builder for
+ the supported architectures and one package per
+ architecture should be available.
+
+Package: playground-debian-native-amd64
+Architecture: amd64
+Description: playground-debian-native (amd64)
+ This package should be routed on an amd64 builder,
+ and should be available only on amd64.
+
+Package: playground-debian-native-arm64
+Architecture: arm64
+Description: playground-debian-native (arm64)
+ This package should be routed on an arm64 builder,
+ and should be available only on arm64.
