@@ -1,0 +1,90 @@
+env:
+  global:
+    BUILD_ON = "amd64"
+
+os: linux
+dist: focal
+
+stages:
+  - build
+
+services:
+  - docker
+
+_debian_package_build_template: &debian_package_build_template
+  stage: build
+
+  script:
+    - echo "test"
+
+_amd64_full_env_filter:
+  &amd64_full_env_filter
+  env: env(BUILD_ON) = "amd64"
+
+_amd64_dep_env_filter:
+  &amd64_dep_env_filter
+  env: env(BUILD_ON) =~ / amd64/
+
+_arm64_full_env_filter:
+  &arm64_full_env_filter
+  env: env(BUILD_ON) = "arm64"
+
+_arm64_dep_env_filter:
+  &arm64_dep_env_filter
+  env: env(BUILD_ON) = / arm64/
+
+_bullseye_job_filter: &bullseye_job_filter
+  if: branch =~ /^(feature\/)?bullseye(\/)?.*$/ OR (tag =~ /^hybris-mobian\/bullseye\/.*$/)
+  
+########################################################################
+
+jobs:
+  include:
+
+  # Debian bullseye AMD64 (x86_64)
+  # - route for full builds (arch-dep, arch-indep and source)
+  - name: bullseye-amd64-full
+    arch: amd64
+    env:
+      - DOCKER_IMAGE="hybrismobian/build-essential:bullseye"
+      - RELENG_FULL_BUILD="yes"
+    <<: *bullseye_job_filter
+    <<: *amd64_full_env_filter
+    <<: *debian_package_build_template
+
+  # Debian bullseye AMD64 (x86_64)
+  # - route for only arch-dep builds
+  - name: bullseye-amd64-dep
+    arch: amd64
+    env:
+      - DOCKER_IMAGE="hybrismobian/build-essential:bullseye"
+      - RELENG_FULL_BUILD="no"
+    <<: *bullseye_job_filter
+    <<: *amd64_dep_env_filter
+    <<: *debian_package_build_template
+
+  # Debian bullseye ARM64 (AArch64)
+  # - route for full builds (arch-dep, arch-indep and source)
+  - name: bullseye-arm64-full
+    arch: arm64-graviton2
+    virt: vm # required to route the job to arm64-graviton2
+    group: edge # required to route the job to arm64-graviton2
+    env:
+      - DOCKER_IMAGE="hybrismobian/build-essential:bullseye"
+      - RELENG_FULL_BUILD="yes"
+    <<: *bullseye_job_filter
+    <<: *arm64_full_env_filter
+    <<: *debian_package_build_template
+
+  # Debian bullseye ARM64 (AArch64)
+  # - route for only arch-dep builds
+  - name: bullseye-arm64-dep
+    arch: arm64-graviton2
+    virt: vm # required to route the job to arm64-graviton2
+    group: edge # required to route the job to arm64-graviton2
+    env:
+      - DOCKER_IMAGE="hybrismobian/build-essential:bullseye"
+      - RELENG_FULL_BUILD="yes"
+    <<: *bullseye_job_filter
+    <<: *arm64_dep_env_filter
+    <<: *debian_package_build_template
