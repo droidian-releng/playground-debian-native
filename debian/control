@@ -30,3 +30,9 @@ Architecture: arm64
 Description: playground-debian-native (arm64)
  This package should be routed on an arm64 builder,
  and should be available only on arm64.
+
+Package: playground-debian-native-armhf
+Architecture: armhf
+Description: playground-debian-native (armhf)
+ This package should be routed on an armhf builder,
+ and should be available only on armhf.
