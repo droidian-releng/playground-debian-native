@@ -1,0 +1,10 @@
+load(
+	"./debian-package.star",
+	"get_debian_package_pipelines"
+)
+
+def main(context):
+	return get_debian_package_pipelines(
+		context,
+		build_on=["amd64", "arm64", "armhf"]
+	)
