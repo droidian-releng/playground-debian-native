@@ -148,6 +148,7 @@ def debian_package_build(suite, architecture, full_build=True, extra_repos=[], h
 					},
 				],
 				"commands" : [
+					"sed -i 's/apt-get update/echo apt-get update/g' /usr/bin/releng-build-package",
 					"releng-build-package",
 					"find /drone -type f -maxdepth 1 -exec mv {} /buildd \\\;",
 				],
