@@ -171,6 +171,9 @@ def debian_package_build(suite, architecture, full_build=True, extra_repos=[], h
 				"commands" : [
 					"ln -s /buildd /tmp/buildd-results",
 					"cd /tmp/buildd-results",
+					"mkdir -p ~/.ssh",
+					"echo 'repo.hybris-mobian.org ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCm8IY+RFwQNIKlQDr2vRBg9zxOzGrSFiHHekwd3zdgW3k3UgW016ArFJgeS8pQ//WqJoxMnQLh42CoWqmrVSbwxyUBAPLagulIpB5vuYDSVMm8O1MWkS7+oZHD5nujQAy4zIxnN7cMSrseUzbt/vyV0dHW+WBxlPnODMDOze/vmhVUDxvsUFi+DzCn9HvSSuViLW3dEKE8po5UP2Ttalq94luru5ZxpfAeCfJ9m4dVw+VRB66c74qtKFR7UfAQVUnOLzIlUtKnG9wrZEYilCFuPFrZVFQ92sSWdPrMjWYaeC+RzwKAscgAjTQhjUeTlb+YaAO8l94zAtE5RjjOdH1t' >> ~/.ssh/known_hosts",
+					"sed -i 's/known_hosts/known_hosts_disabled/g' /usr/local/bin/repo-hybris-mobian-deploy.sh",
 					"repo-hybris-mobian-sign.sh",
 					"repo-hybris-mobian-deploy.sh",
 				],
