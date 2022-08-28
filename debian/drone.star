@@ -78,7 +78,7 @@ DRONE_ARCH_MAPPING = {
 	"amd64" : "amd64",
 	"i386"  : "amd64",
 	"arm64" : "arm64",
-	"armhf" : "arm",
+	"armhf" : "arm64",
 }
 
 DOCKER_IMAGE = "droidian/build-essential"
