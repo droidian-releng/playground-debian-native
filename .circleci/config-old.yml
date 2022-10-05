@@ -1,0 +1,131 @@
+version: 2.1
+
+commands:
+  armhf-setup:
+    # Sets-up the environment to run armhf builds.
+    # Ref: https://thegeeklab.de/posts/2020/09/run-an-arm32-docker-daemon-on-arm64-servers/
+    steps:
+      - run:
+          name: Setup armhf environment
+          command: |
+            cat \<<EOF | sudo tee /etc/apt/sources.list.d/docker-armhf.list
+            deb [arch=armhf] https://download.docker.com/linux/ubuntu focal stable
+            EOF
+            sudo dpkg --add-architecture armhf
+            sudo apt-get update
+            dpkg -l | grep docker
+            sudo systemctl stop docker
+            sudo systemctl stop containerd
+            sudo systemctl disable docker
+            sudo systemctl disable containerd
+            sudo ln -sf /bin/true /usr/sbin/update-initramfs
+            sudo apt-get install --yes docker-ce:armhf docker-ce-cli:armhf docker-ce-rootless-extras:armhf docker-compose-plugin:armhf
+            sudo mkdir -p /etc/systemd/system/containerd.service.d
+            sudo mkdir -p /etc/systemd/system/docker.service.d
+            cat \<<EOF | sudo tee /etc/systemd/system/containerd.service.d/arm32.conf
+            [Service]
+            ExecStart=
+            ExecStart=/usr/bin/setarch linux32 -B /usr/bin/containerd
+            EOF
+            cat \<<EOF | sudo tee /etc/systemd/system/docker.service.d/arm32.conf
+            [Service]
+            ExecStart=
+            ExecStart=/usr/bin/setarch linux32 -B /usr/bin/dockerd -H unix:// --containerd=/run/containerd/containerd.sock
+            EOF
+            sudo systemctl daemon-reload
+            sudo systemctl start containerd
+            sudo systemctl start docker
+
+  debian-build:
+    parameters:
+      suite:
+        type: string
+        default: "bookworm"
+      architecture:
+        type: string
+        default: "arm64"
+      full_build:
+        type: string # yes or no
+        default: "yes"
+      extra_repos:
+        type: string
+        default: ""
+      host_arch:
+        type: string
+        default: ""
+    steps:
+      - run:
+          name: <<parameters.architecture>> build
+          command: |
+            mkdir -p /tmp/buildd-results ; \
+            git clone -b "$CIRCLE_BRANCH" "${CIRCLE_REPOSITORY_URL//git@github.com:/https:\/\/github.com\/}" sources ; \
+            docker run \
+              --rm \
+              -e CI \
+              -e CIRCLECI \
+              -e CIRCLE_BRANCH \
+              -e CIRCLE_SHA1 \
+              -e EXTRA_REPOS="<<parameters.extra_repos>>" \
+              -e RELENG_FULL_BUILD="<<parameters.full_build>>" \
+              -e RELENG_HOST_ARCH="<<parameters.host_arch>>" \
+              -v /tmp/buildd-results:/buildd \
+              -v ${PWD}/sources:/buildd/sources \
+              quay.io/droidian/build-essential:<<parameters.suite>>-<<parameters.architecture>> \
+              /bin/sh -c "cd /buildd/sources ; ls -ltha ; bash -x ./build_package_new.sh"
+
+  deploy:
+    parameters:
+      suite:
+        type: string
+        default: "bookworm"
+      architecture:
+        type: string
+        default: "arm64"
+    steps:
+      - run:
+          name: <<parameters.architecture>> deploy
+          command: |
+            docker run \
+              --rm \
+              -e CI \
+              -e CIRCLECI \
+              -e CIRCLE_BRANCH \
+              -e CIRCLE_SHA1 \
+              -e GPG_STAGINGPRODUCTION_SIGNING_KEY \
+              -e GPG_STAGINGPRODUCTION_SIGNING_KEYID \
+              -e INTAKE_SSH_USER \
+              -e INTAKE_SSH_KEY \
+              -v /tmp/buildd-results:/tmp/buildd-results \
+              quay.io/droidian/build-essential:<<parameters.suite>>-<<parameters.architecture>> \
+              /bin/sh -c "cd /tmp/buildd-results ; repo-droidian-sign.sh ; repo-droidian-deploy.sh"
+
+jobs:
+  build-amd64:
+    machine:
+      image: ubuntu-2004:current
+      resource_class: medium
+    steps:
+      - debian-build:
+          architecture: amd64
+  build-arm64:
+    machine:
+      image: ubuntu-2004:current
+      resource_class: arm.medium
+    steps:
+      - debian-build:
+          architecture: arm64
+  build-armhf:
+    machine:
+      image: ubuntu-2004:current
+      resource_class: arm.medium
+    steps:
+      - armhf-setup
+      - debian-build:
+          architecture: armhf
+
+workflows:
+  build:
+    jobs:
+      - build-amd64
+      - build-arm64
+      - build-armhf
